@@ -1,11 +1,12 @@
-const path = require('path');
+const path = require("path");
 
 module.exports = {
   module: {
-    rules: [{
+    rules: [
+      {
         test: /\.html$/,
         exclude: /node_modules/,
-        loader: 'file-loader?name=[name].[ext]'
+        loader: "file-loader?name=[name].[ext]"
       },
       {
         test: /\.elm$/,
@@ -22,11 +23,11 @@ module.exports = {
     inline: true,
     overlay: true,
     compress: true,
-    port: 3000,
+    port: 3002,
     historyApiFallback: true,
-    contentBase: path.join(__dirname, 'public'),
+    contentBase: path.join(__dirname, "public"),
     watchContentBase: true,
-    publicPath: '/',
+    publicPath: "/",
     watchOptions: {
       ignored: /node_modules/
     }
