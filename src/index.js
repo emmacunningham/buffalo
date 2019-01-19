@@ -1,5 +1,6 @@
 'use strict';
 
+import "./style.css";
 require('./index.html');
 const { Elm } = require('./Main.elm');
 

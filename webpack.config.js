@@ -15,6 +15,10 @@ module.exports = {
         options: {
           debug: true
         }
+      },
+      {
+        test: /\.css$/,
+        loader: ['style-loader', 'css-loader']
       }
     ]
   },
