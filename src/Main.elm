@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Html exposing (Html, button, div, input, text)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick, onInput)
 
 
@@ -60,6 +61,27 @@ sampleTree =
         )
 
 
+renderNode : RenderedNode -> Html Msg
+renderNode node =
+    text node.label
+
+
+renderLines : Html Msg
+renderLines =
+    div [] [ text "--------" ]
+
+
+renderTree : Tree -> Html Msg
+renderTree tree =
+    case tree of
+        Node ( parent, children ) ->
+            div []
+                [ renderNode parent
+                , renderLines
+                , div [ class "nodes" ] (List.map renderTree children)
+                ]
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     ( model, Cmd.none )
@@ -67,9 +89,7 @@ update msg model =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ text "foo"
-        ]
+    renderTree sampleTree
 
 
 init : Flags -> ( Model, Cmd Msg )

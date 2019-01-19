@@ -1,3 +1,7 @@
 body {
   background: rgb(255, 232, 253);
 }
+
+.nodes {
+  display: flex;
+}
