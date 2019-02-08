@@ -3,17 +3,17 @@ module Main exposing (main)
 import Browser
 import Html exposing (Html, button, div, input, text)
 import Html.Attributes exposing (class)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (onClick, onInput, onMouseOut, onMouseOver)
 
 
 type Msg
-    = Increment
-    | Decrement
-    | UpdateInput String
+    = ShowNodeTooltip RenderedNode
+    | HideNodeTooltip
 
 
 type alias Model =
-    {}
+    { currentTooltip : Maybe RenderedNode
+    }
 
 
 type alias Flags =
@@ -63,7 +63,7 @@ sampleTree =
 
 renderNode : RenderedNode -> Html Msg
 renderNode node =
-    text node.label
+    div [ onMouseOver (ShowNodeTooltip node), onMouseOut HideNodeTooltip ] [ text node.label ]
 
 
 renderLines : Html Msg
@@ -84,17 +84,37 @@ renderTree tree =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    ( model, Cmd.none )
+    case msg of
+        ShowNodeTooltip node ->
+            ( { model | currentTooltip = Just node }, Cmd.none )
+
+        HideNodeTooltip ->
+            ( { model | currentTooltip = Nothing }, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    renderTree sampleTree
+    let
+        currentTooltipText =
+            case model.currentTooltip of
+                Nothing ->
+                    ""
+
+                Just node ->
+                    node.details
+    in
+    div []
+        [ renderTree sampleTree
+        , text ("currentNode: " ++ currentTooltipText)
+        ]
 
 
 init : Flags -> ( Model, Cmd Msg )
 init opts =
-    ( {}, Cmd.none )
+    ( { currentTooltip = Nothing
+      }
+    , Cmd.none
+    )
 
 
 subscriptions : Model -> Sub Msg
