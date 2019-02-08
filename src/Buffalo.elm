@@ -1,53 +1,108 @@
-module Buffalo exposing (BuffaloExpression, SyntacticCategory(..))
+module Buffalo exposing (buffalo)
+
+import Tree exposing (RenderedNode, Tree(..))
 
 
-type SyntacticCategory
-    = N
-    | NP
-    | TransitiveVerb
-    | IntransitiveVerb
-    | AdjP
+
+-- type SyntacticCategory
+--     = N
+--     | NP
+--     | TransitiveVerb
+--     | IntransitiveVerb
+--     | AdjP
 
 
 type SemanticValue
-    = CommonNoun (String -> String)
-    | DefiniteNP String
-    | CityAdjP (String -> String)
+    = N (String -> String)
+    | NP String
+    | AdjP (String -> String)
 
 
 type alias BuffaloExpression =
     { surface : String
     , semantics : SemanticValue
-    , syntax : SyntacticCategory
     }
 
 
 buffaloNP : BuffaloExpression
 buffaloNP =
-    { surface = "buffalo"
-    , semantics = DefiniteNP "the group of mammals within the subfamily Bovinae"
-    , syntax = NP
+    { surface = "the group of mammals within the subfamily Bovinae"
+    , semantics = NP "the group of mammals within the subfamily Bovinae"
     }
 
 
 buffaloN : BuffaloExpression
 buffaloN =
-    { surface = "buffalo"
-    , semantics = CommonNoun (\x -> "∃y[" ++ x ++ "is a member of the group of mammals within the subfamily Bovinae]")
-    , syntax = NP
+    { surface = "\\x[x is a member of the group of mammals within the subfamily Bovinae]"
+    , semantics = N (\x -> x ++ " is a member of the group of mammals within the subfamily Bovinae")
     }
 
 
 buffaloCity : BuffaloExpression
 buffaloCity =
-    { surface = "buffalo"
-    , semantics = CityAdjP (\p -> "the x such that x is from Buffalo and " ++ p ++ "(x)")
-    , syntax = NP
+    { surface = "\\P[the x such that x is from Buffalo and P(x)]"
+    , semantics = AdjP (\p -> "the x such that x is from Buffalo and " ++ p ++ "(x)")
     }
 
 
-buffalo : Int -> List BuffaloExpression
+
+-- expressionApplication : BuffaloExpression -> BuffaloExpression
+-- expressionApplication expr =
+--   let
+--       surface = "buffalo " ++ expr.surface
+--       semantics =
+--         case expr of
+--           NP individual ->
+--             expr -- TODO
+--           N predicate ->
+--             NP (predicate)
+--           AdjP predicate ->
+--   in
+--     BuffaloExpression surface semantics
+
+
+toRenderTree : BuffaloExpression -> Tree
+toRenderTree ({ semantics, surface } as buffaloExpr) =
+    case semantics of
+        NP individual ->
+            Node ( RenderedNode "NP" surface, [] )
+
+        N predicate ->
+            Node ( RenderedNode "N" surface, [] )
+
+        AdjP predicate ->
+            Node ( RenderedNode "AdjP" surface, [] )
+
+
+toRenderTrees : List BuffaloExpression -> List Tree
+toRenderTrees buffaloExprs =
+    List.map toRenderTree buffaloExprs
+
+
+buffalo : Int -> List Tree
 buffalo num =
+    case num of
+        0 ->
+            []
+
+        1 ->
+            buffaloParser num |> toRenderTrees
+
+        2 ->
+            [ Node
+                ( RenderedNode "NP" "the meaning of this expression"
+                , [ toRenderTree buffaloCity
+                  , toRenderTree buffaloN
+                  ]
+                )
+            ]
+
+        _ ->
+            []
+
+
+buffaloParser : Int -> List BuffaloExpression
+buffaloParser num =
     case num of
         0 ->
             []
