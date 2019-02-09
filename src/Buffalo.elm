@@ -19,8 +19,7 @@ type SemanticValue
 
 
 type alias BuffaloExpression =
-    { surface : String
-    , semantics : SemanticValue
+    { semantics : SemanticValue
     , tree : Tree
     }
 
@@ -31,8 +30,7 @@ type alias BuffaloExpression =
 
 buffaloNP : BuffaloExpression
 buffaloNP =
-    { surface = "the group of mammals within the subfamily Bovinae"
-    , semantics = NP "the group of mammals within the subfamily Bovinae"
+    { semantics = NP "the group of mammals within the subfamily Bovinae"
     , tree = TerminalNode (RenderedNode "NP" "the group of mammals within the subfamily Bovinae")
     }
 
@@ -58,31 +56,28 @@ convertSyntacticCategoryToString expr =
 
 buffaloN : BuffaloExpression
 buffaloN =
-    { surface = "\\x[x is a member of the group of mammals within the subfamily Bovinae]"
-    , semantics = N (\p -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x")
+    { semantics = N (\p -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x")
     , tree = TerminalNode (RenderedNode "N" "\\x[x is a member of the group of mammals within the subfamily Bovinae]")
     }
 
 
 buffaloCity : BuffaloExpression
 buffaloCity =
-    { surface = "\\P[the x such that x is from Buffalo and P(x)]"
-    , semantics = AdjP (\x -> "x is from Buffalo")
+    { semantics = AdjP (\x -> "x is from Buffalo")
     , tree = TerminalNode (RenderedNode "AdjP" "\\P[the x such that x is from Buffalo and P(x)]")
     }
 
 
-exprToRenderedNode : BuffaloExpression -> RenderedNode
-exprToRenderedNode ({ surface, semantics } as expr) =
-    case semantics of
-        NP individual ->
-            RenderedNode "NP" surface
 
-        N predicate ->
-            RenderedNode "N" surface
-
-        AdjP descriptor ->
-            RenderedNode "AdjP" surface
+-- exprToRenderedNode : BuffaloExpression -> RenderedNode
+-- exprToRenderedNode ({ surface, semantics } as expr) =
+--     case semantics of
+--         NP individual ->
+--             RenderedNode "NP" surface
+--         N predicate ->
+--             RenderedNode "N" surface
+--         AdjP descriptor ->
+--             RenderedNode "AdjP" surface
 
 
 toRenderTrees : List BuffaloExpression -> List Tree
@@ -94,11 +89,15 @@ expressionApplication : BuffaloExpression -> Maybe BuffaloExpression
 expressionApplication ({ tree, semantics } as expr) =
     case semantics of
         N predicate ->
-            Just
-                { surface = "not sure this even matters anymore"
-                , semantics = NP "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY"
-                , tree = Node ( RenderedNode "NP" "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY", [ buffaloCity.tree, tree ] )
-                }
+            case buffaloCity.semantics of
+                AdjP descriptor ->
+                    Just
+                        { semantics = NP (predicate descriptor)
+                        , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
+                        }
+
+                _ ->
+                    Nothing
 
         _ ->
             Nothing
