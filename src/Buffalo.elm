@@ -7,6 +7,7 @@ import Tree exposing (RenderedNode, Tree(..))
 -- live demo : swap out character set
 -- live demo : imperative tense
 
+
 type
     SemanticValue
     -- Could do some real fun stuff with type aliases and parts of speech
@@ -15,6 +16,9 @@ type
     | AdjP (String -> String)
     | IntrVP (String -> String)
     | S String
+    | ObjNP ((String -> (String -> String)) -> String -> String)
+    | TrVerb (String -> String -> String)
+    | VP (String -> String)
 
 
 type alias BuffaloExpression =
@@ -27,10 +31,15 @@ type alias BuffaloExpression =
 -- Function application builds up tree and parses expressions
 
 
+buffaloMammalGroup : String
+buffaloMammalGroup =
+    "[the group of mammals within the subfamily Bovinae]"
+
+
 buffaloNP : BuffaloExpression
 buffaloNP =
-    { semantics = NP "[the group of mammals within the subfamily Bovinae]"
-    , tree = TerminalNode (RenderedNode "NP" "[the group of mammals within the subfamily Bovinae]")
+    { semantics = NP buffaloMammalGroup
+    , tree = TerminalNode (RenderedNode "NP" buffaloMammalGroup)
     }
 
 
@@ -38,25 +47,23 @@ buffaloNP =
 -- noun : String -> (String -> String) -> String
 -- noun predicate adj =
 --     \px -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x"
-
-
-convertSyntacticCategoryToString : SemanticValue -> String
-convertSyntacticCategoryToString expr =
-    case expr of
-        NP individual ->
-            "NP"
-
-        N predicate ->
-            "N"
-
-        AdjP descriptor ->
-            "AdjP"
-
-        IntrVP predicate ->
-            "VP"
-
-        S sentence ->
-            "S"
+-- convertSyntacticCategoryToString : SemanticValue -> String
+-- convertSyntacticCategoryToString expr =
+--     case expr of
+--         NP _ ->
+--             "NP"
+--         N _ ->
+--             "N"
+--         AdjP _ ->
+--             "AdjP"
+--         IntrVP _ ->
+--             "VP"
+--         S _ ->
+--             "S"
+--         ObjNP _ ->
+--             "ObjNP"
+--         TrVerb _ ->
+--             "Verb"
 
 
 buffaloN : BuffaloExpression
@@ -80,16 +87,18 @@ buffaloIntrVerb =
     }
 
 
+buffaloTrVerb : BuffaloExpression
+buffaloTrVerb =
+    { semantics = TrVerb (\o s -> "[" ++ s ++ " bullies" ++ o ++ "]")
+    , tree = TerminalNode (RenderedNode "Verb" "\\o s[s bullies o]")
+    }
 
--- exprToRenderedNode : BuffaloExpression -> RenderedNode
--- exprToRenderedNode ({ surface, semantics } as expr) =
---     case semantics of
---         NP individual ->
---             RenderedNode "NP" surface
---         N predicate ->
---             RenderedNode "N" surface
---         AdjP descriptor ->
---             RenderedNode "AdjP" surface
+
+buffaloObjNP : BuffaloExpression
+buffaloObjNP =
+    { semantics = ObjNP (\p x -> p buffaloMammalGroup x)
+    , tree = buffaloNP.tree
+    }
 
 
 toRenderTrees : List BuffaloExpression -> List Tree
@@ -106,9 +115,9 @@ expressionApplication ({ tree, semantics } as expr) =
             case buffaloCity.semantics of
                 AdjP descriptor ->
                     [ { semantics = NP (predicate descriptor)
-                          , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
-                          }
-                        ]
+                      , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
+                      }
+                    ]
 
                 _ ->
                     []
@@ -126,7 +135,18 @@ expressionApplication ({ tree, semantics } as expr) =
                         _ ->
                             []
             in
-                sentence
+            sentence
+
+        ObjNP individual ->
+            case buffaloTrVerb.semantics of
+                TrVerb predicate ->
+                    [ { semantics = VP (individual predicate)
+                      , tree = Node ( RenderedNode "VP" ("\\x" ++ individual predicate "x"), [ buffaloTrVerb.tree, tree ] )
+                      }
+                    ]
+
+                _ ->
+                    []
 
         _ ->
             []
@@ -158,7 +178,7 @@ buffaloParser num =
             []
 
         1 ->
-            [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb ]
+            [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloObjNP, buffaloTrVerb ]
 
         _ ->
             []
