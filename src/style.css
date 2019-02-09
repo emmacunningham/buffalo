@@ -14,3 +14,9 @@ body {
 .nodes {
   display: flex;
 }
+
+.controls {
+  position: absolute;
+  right: 0;
+  display: flex;
+}

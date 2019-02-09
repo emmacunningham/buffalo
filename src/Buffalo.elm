@@ -186,20 +186,19 @@ buffaloParser num =
         1 ->
             [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloTrVerb ]
 
-        2 ->
-            buffaloParser 1
-                |> List.map expressionApplication
-                |> List.concat
-
-        3 ->
-            buffaloParser 2
-                |> List.map expressionApplication
-                |> List.concat
-
-        4 ->
-            buffaloParser 3
-                |> List.map expressionApplication
-                |> List.concat
-
         _ ->
-            []
+            buffaloParser (num - 1)
+                |> List.map expressionApplication
+                |> List.concat
+
+
+
+-- 3 ->
+--     buffaloParser 2
+--         |> List.map expressionApplication
+--         |> List.concat
+-- 4 ->
+--     buffaloParser 3
+--         |> List.map expressionApplication
+--         |> List.concat
+-- _ ->

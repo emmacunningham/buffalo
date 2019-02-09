@@ -3,7 +3,7 @@ module Main exposing (main)
 import Browser
 import Buffalo exposing (buffalo)
 import Html exposing (Html, button, div, input, text)
-import Html.Attributes exposing (class)
+import Html.Attributes as Attr exposing (class, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseOut, onMouseOver)
 import Tree exposing (RenderedNode, Tree(..), sampleTree)
 
@@ -11,10 +11,12 @@ import Tree exposing (RenderedNode, Tree(..), sampleTree)
 type Msg
     = ShowNodeTooltip RenderedNode
     | HideNodeTooltip
+    | UpdateNumBuffalo String
 
 
 type alias Model =
     { currentTooltip : Maybe RenderedNode
+    , numBuffalo : Int
     }
 
 
@@ -68,6 +70,9 @@ update msg model =
         HideNodeTooltip ->
             ( { model | currentTooltip = Nothing }, Cmd.none )
 
+        UpdateNumBuffalo input ->
+            ( { model | numBuffalo = String.toInt input |> Maybe.withDefault 0 }, Cmd.none )
+
 
 view : Model -> Html Msg
 view model =
@@ -81,14 +86,26 @@ view model =
                     node.details
     in
     div []
-        [ div [] (renderTrees (buffalo 4))
-        , text ("currentNode: " ++ currentTooltipText)
+        [ div [] (renderTrees (buffalo model.numBuffalo))
+        , input
+            [ type_ "range"
+            , Attr.min "0"
+            , Attr.max "20"
+            , value <| String.fromInt model.numBuffalo
+            , onInput UpdateNumBuffalo
+            ]
+            []
+        , div [ class "controls" ]
+            [ div [] [ text ("num buffalo: " ++ String.fromInt model.numBuffalo) ]
+            , div [] [ text ("currentNode: " ++ currentTooltipText) ]
+            ]
         ]
 
 
 init : Flags -> ( Model, Cmd Msg )
 init opts =
     ( { currentTooltip = Nothing
+      , numBuffalo = 3
       }
     , Cmd.none
     )
