@@ -21,6 +21,7 @@ type SemanticValue
 type alias BuffaloExpression =
     { surface : String
     , semantics : SemanticValue
+    , tree : Tree
     }
 
 
@@ -32,6 +33,7 @@ buffaloNP : BuffaloExpression
 buffaloNP =
     { surface = "the group of mammals within the subfamily Bovinae"
     , semantics = NP "the group of mammals within the subfamily Bovinae"
+    , tree = TerminalNode (RenderedNode "NP" "the group of mammals within the subfamily Bovinae")
     }
 
 
@@ -41,10 +43,24 @@ buffaloNP =
 --     \px -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x"
 
 
+convertSyntacticCategoryToString : SemanticValue -> String
+convertSyntacticCategoryToString expr =
+    case expr of
+        NP individual ->
+            "NP"
+
+        N predicate ->
+            "N"
+
+        AdjP descriptor ->
+            "AdjP"
+
+
 buffaloN : BuffaloExpression
 buffaloN =
     { surface = "\\x[x is a member of the group of mammals within the subfamily Bovinae]"
     , semantics = N (\p -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x")
+    , tree = TerminalNode (RenderedNode "N" "\\x[x is a member of the group of mammals within the subfamily Bovinae]")
     }
 
 
@@ -52,41 +68,39 @@ buffaloCity : BuffaloExpression
 buffaloCity =
     { surface = "\\P[the x such that x is from Buffalo and P(x)]"
     , semantics = AdjP (\x -> "x is from Buffalo")
+    , tree = TerminalNode (RenderedNode "AdjP" "\\P[the x such that x is from Buffalo and P(x)]")
     }
 
 
-
--- expressionApplication : BuffaloExpression -> List BuffaloExpression
--- expressionApplication expr =
---   let
---       surface = "buffalo " ++ expr.surface
---       semantics =
---         case expr of
---           NP individual ->
---             expr -- TODO
---           N predicate ->
---             NP (predicate)
---           AdjP predicate ->
---   in
---     BuffaloExpression surface semantics
-
-
-toRenderTree : BuffaloExpression -> Tree
-toRenderTree ({ semantics, surface } as buffaloExpr) =
+exprToRenderedNode : BuffaloExpression -> RenderedNode
+exprToRenderedNode ({ surface, semantics } as expr) =
     case semantics of
         NP individual ->
-            Node ( RenderedNode "NP" surface, [] )
+            RenderedNode "NP" surface
 
         N predicate ->
-            Node ( RenderedNode "N" surface, [] )
+            RenderedNode "N" surface
 
-        AdjP predicate ->
-            Node ( RenderedNode "AdjP" surface, [] )
+        AdjP descriptor ->
+            RenderedNode "AdjP" surface
 
 
 toRenderTrees : List BuffaloExpression -> List Tree
 toRenderTrees buffaloExprs =
-    List.map toRenderTree buffaloExprs
+    List.map .tree buffaloExprs
+
+
+expressionApplication : BuffaloExpression -> BuffaloExpression
+expressionApplication ({ tree, semantics } as expr) =
+    case semantics of
+        N predicate ->
+            { surface = "not sure this even matters anymore"
+            , semantics = NP "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY"
+            , tree = Node ( RenderedNode "NP" "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY", [ buffaloCity.tree, tree ] )
+            }
+
+        _ ->
+            expr
 
 
 buffalo : Int -> List Tree
@@ -99,16 +113,16 @@ buffalo num =
             buffaloParser num |> toRenderTrees
 
         2 ->
-            -- List.map expressionApplication (buffalo 1)
-            -- |> toRenderTrees
-            [ Node
-                ( RenderedNode "NP" "the meaning of this expression"
-                , [ toRenderTree buffaloCity
-                  , toRenderTree buffaloN
-                  ]
-                )
-            ]
+            List.map expressionApplication (buffaloParser 1)
+                |> toRenderTrees
 
+        -- [ Node
+        --     ( RenderedNode "NP" "the meaning of this expression"
+        --     , [ buffaloCity.tree
+        --       , buffaloN.tree
+        --       ]
+        --     )
+        -- ]
         _ ->
             []
 
