@@ -90,17 +90,18 @@ toRenderTrees buffaloExprs =
     List.map .tree buffaloExprs
 
 
-expressionApplication : BuffaloExpression -> BuffaloExpression
+expressionApplication : BuffaloExpression -> Maybe BuffaloExpression
 expressionApplication ({ tree, semantics } as expr) =
     case semantics of
         N predicate ->
-            { surface = "not sure this even matters anymore"
-            , semantics = NP "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY"
-            , tree = Node ( RenderedNode "NP" "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY", [ buffaloCity.tree, tree ] )
-            }
+            Just
+                { surface = "not sure this even matters anymore"
+                , semantics = NP "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY"
+                , tree = Node ( RenderedNode "NP" "the x s.t. is a member of the group of mammals within the subfamily Bovinae and x is from Buffalo, NY", [ buffaloCity.tree, tree ] )
+                }
 
         _ ->
-            expr
+            Nothing
 
 
 buffalo : Int -> List Tree
@@ -113,16 +114,10 @@ buffalo num =
             buffaloParser num |> toRenderTrees
 
         2 ->
-            List.map expressionApplication (buffaloParser 1)
+            buffaloParser 1
+                |> List.filterMap expressionApplication
                 |> toRenderTrees
 
-        -- [ Node
-        --     ( RenderedNode "NP" "the meaning of this expression"
-        --     , [ buffaloCity.tree
-        --       , buffaloN.tree
-        --       ]
-        --     )
-        -- ]
         _ ->
             []
 
