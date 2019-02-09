@@ -5,7 +5,7 @@ import Tree exposing (RenderedNode, Tree(..))
 
 
 -- live demo : swap out character set
-
+-- live demo : imperative tense
 
 type
     SemanticValue
@@ -97,7 +97,7 @@ toRenderTrees buffaloExprs =
     List.map .tree buffaloExprs
 
 
-expressionApplication : BuffaloExpression -> Maybe (List BuffaloExpression)
+expressionApplication : BuffaloExpression -> List BuffaloExpression
 expressionApplication ({ tree, semantics } as expr) =
     case semantics of
         -- Given our very limited set of tokens, we know that N will only occur with AdjP
@@ -105,14 +105,13 @@ expressionApplication ({ tree, semantics } as expr) =
         N predicate ->
             case buffaloCity.semantics of
                 AdjP descriptor ->
-                    Just
-                        [ { semantics = NP (predicate descriptor)
+                    [ { semantics = NP (predicate descriptor)
                           , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
                           }
                         ]
 
                 _ ->
-                    Nothing
+                    []
 
         IntrVP predicate ->
             let
@@ -127,10 +126,10 @@ expressionApplication ({ tree, semantics } as expr) =
                         _ ->
                             []
             in
-            Just sentence
+                sentence
 
         _ ->
-            Nothing
+            []
 
 
 buffalo : Int -> List Tree
@@ -144,7 +143,7 @@ buffalo num =
 
         2 ->
             buffaloParser 1
-                |> List.filterMap expressionApplication
+                |> List.map expressionApplication
                 |> List.concat
                 |> toRenderTrees
 
