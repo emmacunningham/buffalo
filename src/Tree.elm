@@ -4,6 +4,7 @@ import Html exposing (Html, button, div, input, text)
 import Html.Attributes exposing (class)
 import Html.Events exposing (onClick, onInput, onMouseOut, onMouseOver)
 
+
 type alias RenderedNode =
     { label : String
     , details : String
@@ -12,6 +13,7 @@ type alias RenderedNode =
 
 type Tree
     = Node ( RenderedNode, List Tree )
+    | TerminalNode RenderedNode
 
 
 sampleTree : Tree
@@ -34,11 +36,11 @@ sampleTree =
     in
     Node
         ( a
-        , [ Node ( b, [] )
+        , [ TerminalNode b
           , Node
                 ( c
-                , [ Node ( d, [] )
-                  , Node ( e, [] )
+                , [ TerminalNode d
+                  , TerminalNode e
                   ]
                 )
           ]

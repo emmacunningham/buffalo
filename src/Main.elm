@@ -41,6 +41,10 @@ renderTree tree =
                 , renderLines
                 , div [ class "nodes" ] (List.map renderTree children)
                 ]
+        TerminalNode node ->
+            div [ class "tree" ]
+                [ renderNode node ]
+
 
 
 renderTreeContainer : Tree -> Html Msg
