@@ -4,18 +4,17 @@ import Tree exposing (RenderedNode, Tree(..))
 
 
 
--- type SyntacticCategory
---     = N
---     | NP
---     | TransitiveVerb
---     | IntransitiveVerb
---     | AdjP
+-- live demo : swap out character set
 
 
-type SemanticValue
-    = N ((String -> String) -> String)
+type
+    SemanticValue
+    -- Could do some real fun stuff with type aliases and parts of speech
+    = N ((String -> String) -> String) -- it's either with an adjective or by itself
     | NP String
     | AdjP (String -> String)
+    | IntrVP (String -> String)
+    | S String
 
 
 type alias BuffaloExpression =
@@ -30,8 +29,8 @@ type alias BuffaloExpression =
 
 buffaloNP : BuffaloExpression
 buffaloNP =
-    { semantics = NP "the group of mammals within the subfamily Bovinae"
-    , tree = TerminalNode (RenderedNode "NP" "the group of mammals within the subfamily Bovinae")
+    { semantics = NP "[the group of mammals within the subfamily Bovinae]"
+    , tree = TerminalNode (RenderedNode "NP" "[the group of mammals within the subfamily Bovinae]")
     }
 
 
@@ -53,6 +52,12 @@ convertSyntacticCategoryToString expr =
         AdjP descriptor ->
             "AdjP"
 
+        IntrVP predicate ->
+            "VP"
+
+        S sentence ->
+            "S"
+
 
 buffaloN : BuffaloExpression
 buffaloN =
@@ -63,8 +68,15 @@ buffaloN =
 
 buffaloCity : BuffaloExpression
 buffaloCity =
-    { semantics = AdjP (\x -> "x is from Buffalo")
-    , tree = TerminalNode (RenderedNode "AdjP" "\\P[the x such that x is from Buffalo and P(x)]")
+    { semantics = AdjP (\x -> "[" ++ x ++ " is from Buffalo]")
+    , tree = TerminalNode (RenderedNode "AdjP" "\\x[x is from Buffalo]")
+    }
+
+
+buffaloIntrVerb : BuffaloExpression
+buffaloIntrVerb =
+    { semantics = IntrVP (\x -> "[" ++ x ++ " bullies (someone)]")
+    , tree = TerminalNode (RenderedNode "VP" "\\x[x bullies (someone)]")
     }
 
 
@@ -85,19 +97,37 @@ toRenderTrees buffaloExprs =
     List.map .tree buffaloExprs
 
 
-expressionApplication : BuffaloExpression -> Maybe BuffaloExpression
+expressionApplication : BuffaloExpression -> Maybe (List BuffaloExpression)
 expressionApplication ({ tree, semantics } as expr) =
     case semantics of
+        -- Given our very limited set of tokens, we know that N will only occur with AdjP
+        -- We further also know that there is currently only one AdjP
         N predicate ->
             case buffaloCity.semantics of
                 AdjP descriptor ->
                     Just
-                        { semantics = NP (predicate descriptor)
-                        , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
-                        }
+                        [ { semantics = NP (predicate descriptor)
+                          , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
+                          }
+                        ]
 
                 _ ->
                     Nothing
+
+        IntrVP predicate ->
+            let
+                sentence =
+                    case buffaloNP.semantics of
+                        NP individual ->
+                            [ { semantics = S (predicate individual)
+                              , tree = Node ( RenderedNode "S" (predicate individual), [ buffaloNP.tree, tree ] )
+                              }
+                            ]
+
+                        _ ->
+                            []
+            in
+            Just sentence
 
         _ ->
             Nothing
@@ -115,6 +145,7 @@ buffalo num =
         2 ->
             buffaloParser 1
                 |> List.filterMap expressionApplication
+                |> List.concat
                 |> toRenderTrees
 
         _ ->
@@ -128,7 +159,7 @@ buffaloParser num =
             []
 
         1 ->
-            [ buffaloN, buffaloCity, buffaloNP ]
+            [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb ]
 
         _ ->
             []
