@@ -81,7 +81,7 @@ view model =
                     node.details
     in
     div []
-        [ div [] (renderTrees (buffalo 2))
+        [ div [] (renderTrees (buffalo 4))
         , text ("currentNode: " ++ currentTooltipText)
         ]
 

@@ -8,17 +8,39 @@ import Tree exposing (RenderedNode, Tree(..))
 -- live demo : imperative tense
 
 
+type alias Subject =
+    String
+
+
+type alias Object =
+    String
+
+
+type alias Sentence =
+    String
+
+
+type alias TruthStatement =
+    String
+
+
+type alias Adjective =
+    String -> String
+
+
+type alias Individual =
+    String
+
+
 type
     SemanticValue
     -- Could do some real fun stuff with type aliases and parts of speech
-    = N ((String -> String) -> String) -- it's either with an adjective or by itself
-    | NP String
-    | AdjP (String -> String)
-    | IntrVP (String -> String)
-    | S String
-    | ObjNP ((String -> (String -> String)) -> String -> String)
-    | TrVerb (String -> String -> String)
-    | VP (String -> String)
+    = N ((Individual -> TruthStatement) -> TruthStatement) -- it's either with an adjective or by itself
+    | NP Individual
+    | AdjP (Individual -> TruthStatement)
+    | S Sentence
+    | TrVerb (Object -> Subject -> Sentence)
+    | VP (Subject -> Sentence)
 
 
 type alias BuffaloExpression =
@@ -82,7 +104,7 @@ buffaloCity =
 
 buffaloIntrVerb : BuffaloExpression
 buffaloIntrVerb =
-    { semantics = IntrVP (\x -> "[" ++ x ++ " bullies (someone)]")
+    { semantics = VP (\x -> "[" ++ x ++ " bullies (someone)]")
     , tree = TerminalNode (RenderedNode "VP" "\\x[x bullies (someone)]")
     }
 
@@ -91,13 +113,6 @@ buffaloTrVerb : BuffaloExpression
 buffaloTrVerb =
     { semantics = TrVerb (\o s -> "[" ++ s ++ " bullies" ++ o ++ "]")
     , tree = TerminalNode (RenderedNode "Verb" "\\o s[s bullies o]")
-    }
-
-
-buffaloObjNP : BuffaloExpression
-buffaloObjNP =
-    { semantics = ObjNP (\p x -> p buffaloMammalGroup x)
-    , tree = buffaloNP.tree
     }
 
 
@@ -122,7 +137,7 @@ expressionApplication ({ tree, semantics } as expr) =
                 _ ->
                     []
 
-        IntrVP predicate ->
+        VP predicate ->
             let
                 sentence =
                     case buffaloNP.semantics of
@@ -137,11 +152,11 @@ expressionApplication ({ tree, semantics } as expr) =
             in
             sentence
 
-        ObjNP individual ->
+        NP individual ->
             case buffaloTrVerb.semantics of
                 TrVerb predicate ->
-                    [ { semantics = VP (individual predicate)
-                      , tree = Node ( RenderedNode "VP" ("\\x" ++ individual predicate "x"), [ buffaloTrVerb.tree, tree ] )
+                    [ { semantics = VP (predicate individual)
+                      , tree = Node ( RenderedNode "VP" ("\\x" ++ predicate individual "x"), [ buffaloTrVerb.tree, tree ] )
                       }
                     ]
 
@@ -158,17 +173,8 @@ buffalo num =
         0 ->
             []
 
-        1 ->
-            buffaloParser num |> toRenderTrees
-
-        2 ->
-            buffaloParser 1
-                |> List.map expressionApplication
-                |> List.concat
-                |> toRenderTrees
-
         _ ->
-            []
+            buffaloParser num |> toRenderTrees
 
 
 buffaloParser : Int -> List BuffaloExpression
@@ -178,7 +184,22 @@ buffaloParser num =
             []
 
         1 ->
-            [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloObjNP, buffaloTrVerb ]
+            [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloTrVerb ]
+
+        2 ->
+            buffaloParser 1
+                |> List.map expressionApplication
+                |> List.concat
+
+        3 ->
+            buffaloParser 2
+                |> List.map expressionApplication
+                |> List.concat
+
+        4 ->
+            buffaloParser 3
+                |> List.map expressionApplication
+                |> List.concat
 
         _ ->
             []
