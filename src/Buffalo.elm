@@ -121,8 +121,10 @@ toRenderTrees buffaloExprs =
     List.map .tree buffaloExprs
 
 
-expressionApplication : BuffaloExpression -> List BuffaloExpression
-expressionApplication ({ tree, semantics } as expr) =
+-- TODO: make expression application take a list of expressions
+-- and use the list of expressions as a list of next possible expressions
+expressionApplication : List BuffaloExpression -> BuffaloExpression -> List BuffaloExpression
+expressionApplication next ({ tree, semantics } as expr) =
     case semantics of
         -- Given our very limited set of tokens, we know that N will only occur with AdjP
         -- We further also know that there is currently only one AdjP
@@ -186,19 +188,21 @@ buffaloParser num =
         1 ->
             [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloTrVerb ]
 
-        _ ->
+        2 ->
             buffaloParser (num - 1)
-                |> List.map expressionApplication
+                |> List.map (expressionApplication [])
                 |> List.concat
 
+        _ ->
+            let
+                nextDirect =
+                    buffaloParser (num - 1)
+                        |> List.map (expressionApplication [])
+                        |> List.concat
 
-
--- 3 ->
---     buffaloParser 2
---         |> List.map expressionApplication
---         |> List.concat
--- 4 ->
---     buffaloParser 3
---         |> List.map expressionApplication
---         |> List.concat
--- _ ->
+                -- skipNext =
+                --     buffaloParser (num - 2)
+                --         |> List.map (expressionApplication 1)
+                --         |> List.concat
+            in
+            List.concat [ nextDirect ]
