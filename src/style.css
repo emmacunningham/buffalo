@@ -2,9 +2,13 @@ body {
   background: rgb(255, 232, 253);
 }
 
-.tree {
+.tree-container {
   border: 1px solid red;
   margin: 20px 0;
+}
+
+.tree {
+  border: 1px solid green;
 }
 
 .nodes {

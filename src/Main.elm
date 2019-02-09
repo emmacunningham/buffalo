@@ -43,9 +43,16 @@ renderTree tree =
                 ]
 
 
+renderTreeContainer : Tree -> Html Msg
+renderTreeContainer tree =
+    div [ class "tree-container" ]
+        [ renderTree tree
+        ]
+
+
 renderTrees : List Tree -> List (Html Msg)
 renderTrees trees =
-    List.map renderTree trees
+    List.map renderTreeContainer trees
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

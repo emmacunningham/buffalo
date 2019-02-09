@@ -24,6 +24,8 @@ type alias BuffaloExpression =
     }
 
 
+-- Function application builds up tree and parses expressions
+
 buffaloNP : BuffaloExpression
 buffaloNP =
     { surface = "the group of mammals within the subfamily Bovinae"
