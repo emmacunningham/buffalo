@@ -46,7 +46,7 @@ renderTree tree =
 
         TerminalNode node ->
             div [ class "tree" ]
-                [ renderNode node, renderLines ]
+                [ renderNode node, text "buffalo" ]
 
 
 renderTreeContainer : Tree -> Html Msg
@@ -97,7 +97,7 @@ view model =
             []
         , div [ class "controls" ]
             [ div [] [ text ("num buffalo: " ++ String.fromInt model.numBuffalo) ]
-            , div [] [ text ("currentNode: " ++ currentTooltipText) ]
+            , div [] [ div [] [ text "currentNode:" ], div [] [ text currentTooltipText ] ]
             ]
         ]
 
