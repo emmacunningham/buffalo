@@ -96,22 +96,6 @@ toRenderTrees buffaloExprs =
     List.map .tree buffaloExprs
 
 
-isNP : BuffaloExpression -> Bool
-isNP ({ semantics } as expr) =
-    case semantics of
-        NP _ ->
-            True
-
-        _ ->
-            False
-
-
-complexBuffaloNP : List BuffaloExpression
-complexBuffaloNP =
-    buffaloParser 2
-        |> List.filter isNP
-
-
 
 -- TODO: make expression application take a list of expressions
 -- and use the list of expressions as a list of next possible expressions
@@ -125,6 +109,19 @@ applyVP curTree predicate next =
             Just
                 { semantics = S (predicate individual)
                 , tree = Node ( RenderedNode "S" (predicate individual), [ next.tree, curTree ] )
+                }
+
+        _ ->
+            Nothing
+
+
+applyNP : Tree -> Individual -> BuffaloExpression -> Maybe BuffaloExpression
+applyNP curTree individual next =
+    case next.semantics of
+        TrVerb predicate ->
+            Just
+                { semantics = VP (predicate individual)
+                , tree = Node ( RenderedNode "VP" ("\\x" ++ predicate individual "x"), [ next.tree, curTree ] )
                 }
 
         _ ->
@@ -151,15 +148,6 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
             let
                 sentence =
                     List.filterMap (applyVP tree predicate) (buffaloParser 1)
-
-                -- case buffaloNP.semantics of
-                --     NP individual ->
-                --         [ { semantics = S (predicate individual)
-                --           , tree = Node ( RenderedNode "S" (predicate individual), [ buffaloNP.tree, tree ] )
-                --           }
-                --         ]
-                --     _ ->
-                --         []
             in
             sentence
 
@@ -167,15 +155,10 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
             List.filterMap (applyVP tree predicate) (buffaloParser 2)
 
         ( NP individual, False ) ->
-            case buffaloTrVerb.semantics of
-                TrVerb predicate ->
-                    [ { semantics = VP (predicate individual)
-                      , tree = Node ( RenderedNode "VP" ("\\x" ++ predicate individual "x"), [ buffaloTrVerb.tree, tree ] )
-                      }
-                    ]
+            List.filterMap (applyNP tree individual) (buffaloParser 1)
 
-                _ ->
-                    []
+        ( NP individual, True ) ->
+            List.filterMap (applyNP tree individual) (buffaloParser 2)
 
         ( _, _ ) ->
             []
@@ -183,15 +166,7 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
 
 buffalo : Int -> List Tree
 buffalo num =
-    case num of
-        0 ->
-            []
-
-        1 ->
-            buffaloParser 1 |> toRenderTrees
-
-        _ ->
-            buffaloParser num |> toRenderTrees
+    buffaloParser num |> toRenderTrees
 
 
 
