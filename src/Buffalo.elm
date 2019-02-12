@@ -179,7 +179,14 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
             List.concat [ sentence, relativeClause ]
 
         ( VP predicate, True ) ->
-            List.filterMap (applyVP tree predicate) (buffaloParser 2)
+            let
+                sentence =
+                    List.filterMap (applyVP tree predicate) (buffaloParser 2)
+
+                relativeClause =
+                    List.filterMap (transformVP tree predicate) (buffaloParser 2)
+            in
+            List.concat [ sentence, relativeClause ]
 
         ( NP individual, False ) ->
             List.filterMap (applyNP tree individual) (buffaloParser 1)
