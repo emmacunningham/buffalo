@@ -119,12 +119,12 @@ complexBuffaloNP =
 
 
 applyVP : Tree -> (Subject -> Sentence) -> BuffaloExpression -> Maybe BuffaloExpression
-applyVP vpTree predicate expr =
-    case expr.semantics of
+applyVP curTree predicate next =
+    case next.semantics of
         NP individual ->
             Just
                 { semantics = S (predicate individual)
-                , tree = Node ( RenderedNode "S" (predicate individual), [ expr.tree, vpTree ] )
+                , tree = Node ( RenderedNode "S" (predicate individual), [ next.tree, curTree ] )
                 }
 
         _ ->
@@ -150,15 +150,16 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
         ( VP predicate, False ) ->
             let
                 sentence =
-                    case buffaloNP.semantics of
-                        NP individual ->
-                            [ { semantics = S (predicate individual)
-                              , tree = Node ( RenderedNode "S" (predicate individual), [ buffaloNP.tree, tree ] )
-                              }
-                            ]
+                    List.filterMap (applyVP tree predicate) (buffaloParser 1)
 
-                        _ ->
-                            []
+                -- case buffaloNP.semantics of
+                --     NP individual ->
+                --         [ { semantics = S (predicate individual)
+                --           , tree = Node ( RenderedNode "S" (predicate individual), [ buffaloNP.tree, tree ] )
+                --           }
+                --         ]
+                --     _ ->
+                --         []
             in
             sentence
 
@@ -178,6 +179,7 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
 
         ( _, _ ) ->
             []
+
 
 buffalo : Int -> List Tree
 buffalo num =
