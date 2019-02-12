@@ -128,21 +128,29 @@ applyNP curTree individual next =
             Nothing
 
 
+applyN : Tree -> ((Individual -> TruthStatement) -> TruthStatement) -> BuffaloExpression -> Maybe BuffaloExpression
+applyN curTree predicate next =
+    case next.semantics of
+        AdjP descriptor ->
+            Just
+                { semantics = NP (predicate descriptor)
+                , tree = Node ( RenderedNode "NP" (predicate descriptor), [ next.tree, curTree ] )
+                }
+
+        _ ->
+            Nothing
+
+
 expressionApplication : Bool -> BuffaloExpression -> List BuffaloExpression
 expressionApplication skipNext ({ tree, semantics } as expr) =
     case ( semantics, skipNext ) of
         -- Given our very limited set of tokens, we know that N will only occur with AdjP
         -- We further also know that there is currently only one AdjP
         ( N predicate, False ) ->
-            case buffaloCity.semantics of
-                AdjP descriptor ->
-                    [ { semantics = NP (predicate descriptor)
-                      , tree = Node ( RenderedNode "NP" (predicate descriptor), [ buffaloCity.tree, tree ] )
-                      }
-                    ]
+            List.filterMap (applyN tree predicate) (buffaloParser 1)
 
-                _ ->
-                    []
+        ( N predicate, True ) ->
+            List.filterMap (applyN tree predicate) (buffaloParser 2)
 
         ( VP predicate, False ) ->
             let
