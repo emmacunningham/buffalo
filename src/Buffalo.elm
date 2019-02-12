@@ -32,9 +32,7 @@ type alias Individual =
     String
 
 
-type
-    SemanticValue
-    -- Could do some real fun stuff with type aliases and parts of speech
+type SemanticValue
     = N ((Individual -> TruthStatement) -> TruthStatement) -- it's either with an adjective or by itself
     | NP Individual
     | AdjP (Individual -> TruthStatement)
@@ -63,29 +61,6 @@ buffaloNP =
     { semantics = NP buffaloMammalGroup
     , tree = TerminalNode (RenderedNode "NP" buffaloMammalGroup)
     }
-
-
-
--- noun : String -> (String -> String) -> String
--- noun predicate adj =
---     \px -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x"
--- convertSyntacticCategoryToString : SemanticValue -> String
--- convertSyntacticCategoryToString expr =
---     case expr of
---         NP _ ->
---             "NP"
---         N _ ->
---             "N"
---         AdjP _ ->
---             "AdjP"
---         IntrVP _ ->
---             "VP"
---         S _ ->
---             "S"
---         ObjNP _ ->
---             "ObjNP"
---         TrVerb _ ->
---             "Verb"
 
 
 buffaloN : BuffaloExpression
@@ -121,14 +96,47 @@ toRenderTrees buffaloExprs =
     List.map .tree buffaloExprs
 
 
+isNP : BuffaloExpression -> Bool
+isNP ({ semantics } as expr) =
+    case semantics of
+        NP _ ->
+            True
+
+        _ ->
+            False
+
+
+complexBuffaloNP : List BuffaloExpression
+complexBuffaloNP =
+    buffaloParser 2
+        |> List.filter isNP
+
+
+
 -- TODO: make expression application take a list of expressions
 -- and use the list of expressions as a list of next possible expressions
-expressionApplication : List BuffaloExpression -> BuffaloExpression -> List BuffaloExpression
-expressionApplication next ({ tree, semantics } as expr) =
-    case semantics of
+-- num next tells you how many next expressions to take
+
+
+applyVP : Tree -> (Subject -> Sentence) -> BuffaloExpression -> Maybe BuffaloExpression
+applyVP vpTree predicate expr =
+    case expr.semantics of
+        NP individual ->
+            Just
+                { semantics = S (predicate individual)
+                , tree = Node ( RenderedNode "S" (predicate individual), [ expr.tree, vpTree ] )
+                }
+
+        _ ->
+            Nothing
+
+
+expressionApplication : Bool -> BuffaloExpression -> List BuffaloExpression
+expressionApplication skipNext ({ tree, semantics } as expr) =
+    case ( semantics, skipNext ) of
         -- Given our very limited set of tokens, we know that N will only occur with AdjP
         -- We further also know that there is currently only one AdjP
-        N predicate ->
+        ( N predicate, False ) ->
             case buffaloCity.semantics of
                 AdjP descriptor ->
                     [ { semantics = NP (predicate descriptor)
@@ -139,7 +147,7 @@ expressionApplication next ({ tree, semantics } as expr) =
                 _ ->
                     []
 
-        VP predicate ->
+        ( VP predicate, False ) ->
             let
                 sentence =
                     case buffaloNP.semantics of
@@ -154,7 +162,10 @@ expressionApplication next ({ tree, semantics } as expr) =
             in
             sentence
 
-        NP individual ->
+        ( VP predicate, True ) ->
+            List.filterMap (applyVP tree predicate) (buffaloParser 2)
+
+        ( NP individual, False ) ->
             case buffaloTrVerb.semantics of
                 TrVerb predicate ->
                     [ { semantics = VP (predicate individual)
@@ -165,9 +176,8 @@ expressionApplication next ({ tree, semantics } as expr) =
                 _ ->
                     []
 
-        _ ->
+        ( _, _ ) ->
             []
-
 
 buffalo : Int -> List Tree
 buffalo num =
@@ -175,8 +185,18 @@ buffalo num =
         0 ->
             []
 
+        1 ->
+            buffaloParser 1 |> toRenderTrees
+
         _ ->
             buffaloParser num |> toRenderTrees
+
+
+
+-- What we want to do is be able to pass in the next expression
+-- so that for [buffalo 3], we can parse it as [buffalo 1] [buffalo 2]
+-- as well as [[buffalo 1] [buffalo 1]] [buffalo 1] (this is what we currently support)
+-- solve for our previous case first and then we'll  work to support the first case
 
 
 buffaloParser : Int -> List BuffaloExpression
@@ -190,19 +210,19 @@ buffaloParser num =
 
         2 ->
             buffaloParser (num - 1)
-                |> List.map (expressionApplication [])
+                |> List.map (expressionApplication False)
                 |> List.concat
 
         _ ->
             let
                 nextDirect =
                     buffaloParser (num - 1)
-                        |> List.map (expressionApplication [])
+                        |> List.map (expressionApplication False)
                         |> List.concat
 
-                -- skipNext =
-                --     buffaloParser (num - 2)
-                --         |> List.map (expressionApplication 1)
-                --         |> List.concat
+                skipNext =
+                    buffaloParser (num - 2)
+                        |> List.map (expressionApplication True)
+                        |> List.concat
             in
-            List.concat [ nextDirect ]
+            List.concat [ nextDirect, skipNext ]
