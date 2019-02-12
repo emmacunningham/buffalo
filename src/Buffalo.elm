@@ -36,9 +36,9 @@ type SemanticValue
     = N ((Individual -> TruthStatement) -> TruthStatement) -- it's either with an adjective or by itself
     | NP Individual
     | AdjP (Individual -> TruthStatement)
-    | S Sentence
-    | TrVerb (Object -> Subject -> Sentence)
-    | VP (Subject -> Sentence)
+    | S TruthStatement
+    | TrVerb (Object -> Individual -> TruthStatement)
+    | VP (Individual -> TruthStatement)
 
 
 type alias BuffaloExpression =
@@ -97,9 +97,12 @@ toRenderTrees buffaloExprs =
 
 
 
--- TODO: make expression application take a list of expressions
--- and use the list of expressions as a list of next possible expressions
--- num next tells you how many next expressions to take
+-- TODO : collapse these types so this is a more expressive type signature
+
+
+attachRC : Individual -> (Individual -> TruthStatement) -> Individual
+attachRC individual predicate =
+    predicate (individual ++ " who ")
 
 
 applyVP : Tree -> (Subject -> Sentence) -> BuffaloExpression -> Maybe BuffaloExpression
@@ -109,6 +112,19 @@ applyVP curTree predicate next =
             Just
                 { semantics = S (predicate individual)
                 , tree = Node ( RenderedNode "S" (predicate individual), [ next.tree, curTree ] )
+                }
+
+        _ ->
+            Nothing
+
+
+transformVP : Tree -> (Subject -> Sentence) -> BuffaloExpression -> Maybe BuffaloExpression
+transformVP curTree predicate next =
+    case next.semantics of
+        NP individual ->
+            Just
+                { semantics = NP (attachRC individual predicate)
+                , tree = Node ( RenderedNode "NP-RC" (attachRC individual predicate), [ next.tree, curTree ] )
                 }
 
         _ ->
@@ -156,8 +172,11 @@ expressionApplication skipNext ({ tree, semantics } as expr) =
             let
                 sentence =
                     List.filterMap (applyVP tree predicate) (buffaloParser 1)
+
+                relativeClause =
+                    List.filterMap (transformVP tree predicate) (buffaloParser 1)
             in
-            sentence
+            List.concat [ sentence, relativeClause ]
 
         ( VP predicate, True ) ->
             List.filterMap (applyVP tree predicate) (buffaloParser 2)
