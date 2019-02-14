@@ -91,15 +91,6 @@ buffaloTrVerb =
     }
 
 
-toRenderTrees : List BuffaloExpression -> List Tree
-toRenderTrees buffaloExprs =
-    List.map .tree buffaloExprs
-
-
-
--- TODO : collapse these types so this is a more expressive type signature
-
-
 attachRC : Individual -> (Individual -> TruthStatement) -> Individual
 attachRC individual predicate =
     predicate (individual ++ " who ")
@@ -157,57 +148,55 @@ applyN curTree predicate next =
             Nothing
 
 
-expressionApplication : Bool -> BuffaloExpression -> List BuffaloExpression
-expressionApplication skipNext ({ tree, semantics } as expr) =
-    case ( semantics, skipNext ) of
+expressionApplication : Int -> BuffaloExpression -> List BuffaloExpression
+expressionApplication takeNext ({ tree, semantics } as expr) =
+    case semantics of
         -- Given our very limited set of tokens, we know that N will only occur with AdjP
         -- We further also know that there is currently only one AdjP
-        ( N predicate, False ) ->
-            List.filterMap (applyN tree predicate) (buffaloParser 1)
+        N predicate ->
+            List.filterMap (applyN tree predicate) (buffaloParser takeNext)
 
-        ( N predicate, True ) ->
-            List.filterMap (applyN tree predicate) (buffaloParser 2)
-
-        ( VP predicate, False ) ->
+        VP predicate ->
             let
                 sentence =
-                    List.filterMap (applyVP tree predicate) (buffaloParser 1)
+                    List.filterMap (applyVP tree predicate) (buffaloParser takeNext)
 
                 relativeClause =
-                    List.filterMap (transformVP tree predicate) (buffaloParser 1)
+                    List.filterMap (transformVP tree predicate) (buffaloParser takeNext)
             in
             List.concat [ sentence, relativeClause ]
 
-        ( VP predicate, True ) ->
-            let
-                sentence =
-                    List.filterMap (applyVP tree predicate) (buffaloParser 2)
+        NP individual ->
+            List.filterMap (applyNP tree individual) (buffaloParser takeNext)
 
-                relativeClause =
-                    List.filterMap (transformVP tree predicate) (buffaloParser 2)
-            in
-            List.concat [ sentence, relativeClause ]
-
-        ( NP individual, False ) ->
-            List.filterMap (applyNP tree individual) (buffaloParser 1)
-
-        ( NP individual, True ) ->
-            List.filterMap (applyNP tree individual) (buffaloParser 2)
-
-        ( _, _ ) ->
+        _ ->
             []
+
+
+toRenderTrees : List BuffaloExpression -> List Tree
+toRenderTrees buffaloExprs =
+    buffaloExprs
+        |> List.filterMap allFilter
+
+
+allFilter : BuffaloExpression -> Maybe Tree
+allFilter expr =
+    Just expr.tree
+
+
+sentenceFilter : BuffaloExpression -> Maybe Tree
+sentenceFilter expr =
+    case expr.semantics of
+        S sentence ->
+            Just expr.tree
+
+        _ ->
+            Nothing
 
 
 buffalo : Int -> List Tree
 buffalo num =
     buffaloParser num |> toRenderTrees
-
-
-
--- What we want to do is be able to pass in the next expression
--- so that for [buffalo 3], we can parse it as [buffalo 1] [buffalo 2]
--- as well as [[buffalo 1] [buffalo 1]] [buffalo 1] (this is what we currently support)
--- solve for our previous case first and then we'll  work to support the first case
 
 
 buffaloParser : Int -> List BuffaloExpression
@@ -219,21 +208,16 @@ buffaloParser num =
         1 ->
             [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloTrVerb ]
 
-        2 ->
-            buffaloParser (num - 1)
-                |> List.map (expressionApplication False)
-                |> List.concat
-
         _ ->
             let
                 nextDirect =
                     buffaloParser (num - 1)
-                        |> List.map (expressionApplication False)
+                        |> List.map (expressionApplication 1)
                         |> List.concat
 
                 skipNext =
                     buffaloParser (num - 2)
-                        |> List.map (expressionApplication True)
+                        |> List.map (expressionApplication 2)
                         |> List.concat
             in
             List.concat [ nextDirect, skipNext ]
