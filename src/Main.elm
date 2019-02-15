@@ -13,11 +13,13 @@ type Msg
     = ShowNodeTooltip RenderedNode
     | HideNodeTooltip
     | UpdateNumBuffalo String
+    | UpdateExpressionFilter ExpressionFilter
 
 
 type alias Model =
     { currentTooltip : Maybe RenderedNode
     , numBuffalo : Int
+    , parseType : ExpressionFilter
     }
 
 
@@ -83,6 +85,40 @@ update msg model =
         UpdateNumBuffalo input ->
             ( { model | numBuffalo = String.toInt input |> Maybe.withDefault 0 }, Cmd.none )
 
+        UpdateExpressionFilter filter ->
+            ( { model | parseType = filter }, Cmd.none )
+
+
+renderExpressionFilters : Model -> Html Msg
+renderExpressionFilters model =
+    let
+        isAllActive =
+            case model.parseType of
+                All ->
+                    True
+
+                Sentences ->
+                    False
+    in
+    div [ class "expression-filters" ]
+        [ renderExpressionFilter isAllActive All "all phrases"
+        , renderExpressionFilter (not isAllActive) Sentences "only sentences"
+        ]
+
+
+renderExpressionFilter : Bool -> ExpressionFilter -> String -> Html Msg
+renderExpressionFilter isActive filter label =
+    let
+        classes =
+            case isActive of
+                True ->
+                    "active filter"
+
+                False ->
+                    "filter"
+    in
+    div [ onClick (UpdateExpressionFilter filter), class classes ] [ text label ]
+
 
 renderControls : Model -> Int -> Html Msg
 renderControls model numExprs =
@@ -94,6 +130,14 @@ renderControls model numExprs =
 
                 Just node ->
                     node.details
+
+        parseType =
+            case model.parseType of
+                All ->
+                    "phrases"
+
+                Sentences ->
+                    "sentences"
     in
     div [ class "controls" ]
         [ input
@@ -104,8 +148,9 @@ renderControls model numExprs =
             , onInput UpdateNumBuffalo
             ]
             []
-        , div [] [ text ("buffalo(" ++ String.fromInt model.numBuffalo ++ ") has " ++ String.fromInt numExprs ++ " valid parses") ]
-        , div [] [ div [] [ text "current node: " ], div [ class "node-details" ] [ text currentTooltipText ] ]
+        , renderExpressionFilters model
+        , div [] [ text ("buffalo(" ++ String.fromInt model.numBuffalo ++ ") yields " ++ String.fromInt numExprs ++ " valid " ++ parseType) ]
+        , div [] [ div [ class "details-container" ] [ text "current node: " ], div [ class "node-details" ] [ text currentTooltipText ] ]
         ]
 
 
@@ -113,7 +158,7 @@ view : Model -> Html Msg
 view model =
     let
         buffaloExprs =
-            buffalo model.numBuffalo Sentences Emoji
+            buffalo model.numBuffalo model.parseType Emoji
     in
     div []
         [ renderControls model (List.length buffaloExprs)
@@ -125,6 +170,7 @@ init : Flags -> ( Model, Cmd Msg )
 init opts =
     ( { currentTooltip = Nothing
       , numBuffalo = 3
+      , parseType = Sentences
       }
     , Cmd.none
     )

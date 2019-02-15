@@ -10,14 +10,33 @@ input {
   padding: 20px;
 }
 
+.expression-filters {
+  display: flex;
+  font-size: 24px;
+  cursor: pointer;
+}
+
+.details-container {
+  margin-top: 30px;
+}
+
+.filter {
+  margin-right: 10px;
+}
+
+.active.filter {
+  text-decoration: underline;
+}
+
 .controls {
   background: #fff;
   position: fixed;
   width: 100%;
+  top: 0
 }
 
 .trees-container {
-  padding-top: 370px;
+  padding-top: 430px;
 }
 
 .tree-container {
