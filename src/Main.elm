@@ -35,6 +35,16 @@ renderLines =
     div [] [ text "--------" ]
 
 
+renderTerminalNode : RenderedNode -> String
+renderTerminalNode node =
+    case node.label of
+        "wh" ->
+            "(that)"
+
+        _ ->
+            "buffalo"
+
+
 renderTree : Tree -> Html Msg
 renderTree tree =
     case tree of
@@ -46,7 +56,7 @@ renderTree tree =
 
         TerminalNode node ->
             div [ class "tree" ]
-                [ renderNode node, text "buffalo" ]
+                [ renderNode node, text (renderTerminalNode node) ]
 
 
 renderTreeContainer : Tree -> Html Msg
@@ -74,8 +84,8 @@ update msg model =
             ( { model | numBuffalo = String.toInt input |> Maybe.withDefault 0 }, Cmd.none )
 
 
-renderControls : Model -> Html Msg
-renderControls model =
+renderControls : Model -> Int -> Html Msg
+renderControls model numExprs =
     let
         currentTooltipText =
             case model.currentTooltip of
@@ -94,16 +104,20 @@ renderControls model =
             , onInput UpdateNumBuffalo
             ]
             []
-        , div [] [ text ("num buffalo: " ++ String.fromInt model.numBuffalo) ]
-        , div [] [ div [] [ text "currentNode: " ], div [ class "node-details" ] [ text currentTooltipText ] ]
+        , div [] [ text ("buffalo(" ++ String.fromInt model.numBuffalo ++ ") has " ++ String.fromInt numExprs ++ " valid parses") ]
+        , div [] [ div [] [ text "current node: " ], div [ class "node-details" ] [ text currentTooltipText ] ]
         ]
 
 
 view : Model -> Html Msg
 view model =
+    let
+        buffaloExprs =
+            buffalo model.numBuffalo Sentences
+    in
     div []
-        [ renderControls model
-        , div [] (renderTrees (buffalo model.numBuffalo Sentences))
+        [ renderControls model (List.length buffaloExprs)
+        , div [ class "trees-container" ] (renderTrees buffaloExprs)
         ]
 
 

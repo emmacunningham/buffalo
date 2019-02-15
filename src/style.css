@@ -5,13 +5,28 @@ body {
   font-size: 42px;
 }
 
+input {
+  width: 80%;
+  padding: 20px;
+}
+
+.controls {
+  background: #fff;
+  position: fixed;
+  width: 100%;
+}
+
+.trees-container {
+  padding-top: 370px;
+}
+
 .tree-container {
   border: 1px solid red;
   margin: 20px 0;
+  font-size: 30px;
 }
 
 .tree {
-  /* border: 1px solid green; */
   padding: 10px;
 }
 

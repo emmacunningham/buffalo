@@ -110,13 +110,22 @@ applyVP curTree predicate next =
             Nothing
 
 
+rcNode : Tree
+rcNode =
+    TerminalNode (RenderedNode "wh" "(that)")
+
+
 transformVP : Tree -> (Subject -> Sentence) -> BuffaloExpression -> Maybe BuffaloExpression
 transformVP curTree predicate next =
     case next.semantics of
         NP individual ->
             Just
                 { semantics = NP (attachRC individual predicate)
-                , tree = Node ( RenderedNode "NP-RC" (attachRC individual predicate), [ next.tree, curTree ] )
+                , tree =
+                    Node
+                        ( RenderedNode "NP-RC" (attachRC individual predicate)
+                        , [ next.tree, Node ( RenderedNode "RC" (predicate "that"), [ rcNode, curTree ] ) ]
+                        )
                 }
 
         _ ->
