@@ -1,5 +1,8 @@
+@import url('https://fonts.googleapis.com/css?family=Raleway');
+
 body {
-  background: rgb(255, 232, 253);
+  font-family: 'Raleway', sans-serif;
+  font-size: 42px;
 }
 
 .tree-container {
@@ -8,10 +11,20 @@ body {
 }
 
 .tree {
-  border: 1px solid green;
+  /* border: 1px solid green; */
+  padding: 10px;
 }
 
 .nodes {
   display: flex;
+}
+
+.node-details {
+  height: 200px;
+}
+
+.node-label {
+  cursor: pointer;
+  border-bottom: 1px solid #000;
 }
 

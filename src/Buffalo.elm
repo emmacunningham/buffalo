@@ -1,5 +1,6 @@
 module Buffalo exposing (buffalo)
 
+import ExpressionFilter exposing (ExpressionFilter(..))
 import Tree exposing (RenderedNode, Tree(..))
 
 
@@ -151,8 +152,6 @@ applyN curTree predicate next =
 expressionApplication : Int -> BuffaloExpression -> List BuffaloExpression
 expressionApplication takeNext ({ tree, semantics } as expr) =
     case semantics of
-        -- Given our very limited set of tokens, we know that N will only occur with AdjP
-        -- We further also know that there is currently only one AdjP
         N predicate ->
             List.filterMap (applyN tree predicate) (buffaloParser takeNext)
 
@@ -173,10 +172,19 @@ expressionApplication takeNext ({ tree, semantics } as expr) =
             []
 
 
-toRenderTrees : List BuffaloExpression -> List Tree
-toRenderTrees buffaloExprs =
+toRenderTrees : ExpressionFilter -> List BuffaloExpression -> List Tree
+toRenderTrees filter buffaloExprs =
+    let
+        filterFn =
+            case filter of
+                All ->
+                    allFilter
+
+                Sentences ->
+                    sentenceFilter
+    in
     buffaloExprs
-        |> List.filterMap allFilter
+        |> List.filterMap filterFn
 
 
 allFilter : BuffaloExpression -> Maybe Tree
@@ -194,9 +202,9 @@ sentenceFilter expr =
             Nothing
 
 
-buffalo : Int -> List Tree
-buffalo num =
-    buffaloParser num |> toRenderTrees
+buffalo : Int -> ExpressionFilter -> List Tree
+buffalo num filter =
+    buffaloParser num |> toRenderTrees filter
 
 
 buffaloParser : Int -> List BuffaloExpression

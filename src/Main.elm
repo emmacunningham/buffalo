@@ -2,6 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Buffalo exposing (buffalo)
+import ExpressionFilter exposing (ExpressionFilter(..))
 import Html exposing (Html, button, div, input, text)
 import Html.Attributes as Attr exposing (class, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseOut, onMouseOver)
@@ -26,7 +27,7 @@ type alias Flags =
 
 renderNode : RenderedNode -> Html Msg
 renderNode node =
-    div [ onMouseOver (ShowNodeTooltip node), onMouseOut HideNodeTooltip ] [ text node.label ]
+    div [ onMouseOver (ShowNodeTooltip node), onMouseOut HideNodeTooltip, class "node-label" ] [ text node.label ]
 
 
 renderLines : Html Msg
@@ -40,7 +41,6 @@ renderTree tree =
         Node ( parent, children ) ->
             div [ class "tree" ]
                 [ renderNode parent
-                , renderLines
                 , div [ class "nodes" ] (List.map renderTree children)
                 ]
 
@@ -74,8 +74,8 @@ update msg model =
             ( { model | numBuffalo = String.toInt input |> Maybe.withDefault 0 }, Cmd.none )
 
 
-view : Model -> Html Msg
-view model =
+renderControls : Model -> Html Msg
+renderControls model =
     let
         currentTooltipText =
             case model.currentTooltip of
@@ -85,9 +85,8 @@ view model =
                 Just node ->
                     node.details
     in
-    div []
-        [ div [] (renderTrees (buffalo model.numBuffalo))
-        , input
+    div [ class "controls" ]
+        [ input
             [ type_ "range"
             , Attr.min "0"
             , Attr.max "20"
@@ -95,10 +94,16 @@ view model =
             , onInput UpdateNumBuffalo
             ]
             []
-        , div [ class "controls" ]
-            [ div [] [ text ("num buffalo: " ++ String.fromInt model.numBuffalo) ]
-            , div [] [ div [] [ text "currentNode:" ], div [] [ text currentTooltipText ] ]
-            ]
+        , div [] [ text ("num buffalo: " ++ String.fromInt model.numBuffalo) ]
+        , div [] [ div [] [ text "currentNode: " ], div [ class "node-details" ] [ text currentTooltipText ] ]
+        ]
+
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ renderControls model
+        , div [] (renderTrees (buffalo model.numBuffalo Sentences))
         ]
 
 
