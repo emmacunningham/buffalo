@@ -14,12 +14,14 @@ type Msg
     | HideNodeTooltip
     | UpdateNumBuffalo String
     | UpdateExpressionFilter ExpressionFilter
+    | UpdateRepresentation Representation
 
 
 type alias Model =
     { currentTooltip : Maybe RenderedNode
     , numBuffalo : Int
     , parseType : ExpressionFilter
+    , representation : Representation
     }
 
 
@@ -88,6 +90,9 @@ update msg model =
         UpdateExpressionFilter filter ->
             ( { model | parseType = filter }, Cmd.none )
 
+        UpdateRepresentation rep ->
+            ( { model | representation = rep }, Cmd.none )
+
 
 renderExpressionFilters : Model -> Html Msg
 renderExpressionFilters model =
@@ -120,6 +125,37 @@ renderExpressionFilter isActive filter label =
     div [ onClick (UpdateExpressionFilter filter), class classes ] [ text label ]
 
 
+renderRepresentationSelectors : Model -> Html Msg
+renderRepresentationSelectors model =
+    let
+        isVerboseActive =
+            case model.representation of
+                Verbose ->
+                    True
+
+                _ ->
+                    False
+    in
+    div [ class "representation-types" ]
+        [ renderRepresentationSelector isVerboseActive Verbose "verbose"
+        , renderRepresentationSelector (not isVerboseActive) Emoji "emoji"
+        ]
+
+
+renderRepresentationSelector : Bool -> Representation -> String -> Html Msg
+renderRepresentationSelector isActive rep label =
+    let
+        classes =
+            case isActive of
+                True ->
+                    "active rep"
+
+                False ->
+                    "rep"
+    in
+    div [ onClick (UpdateRepresentation rep), class classes ] [ text label ]
+
+
 renderControls : Model -> Int -> Html Msg
 renderControls model numExprs =
     let
@@ -148,7 +184,10 @@ renderControls model numExprs =
             , onInput UpdateNumBuffalo
             ]
             []
-        , renderExpressionFilters model
+        , div [ class "options" ]
+            [ renderExpressionFilters model
+            , renderRepresentationSelectors model
+            ]
         , div [] [ text ("buffalo(" ++ String.fromInt model.numBuffalo ++ ") yields " ++ String.fromInt numExprs ++ " valid " ++ parseType) ]
         , div [] [ div [ class "details-container" ] [ text "current node: " ], div [ class "node-details" ] [ text currentTooltipText ] ]
         ]
@@ -158,7 +197,7 @@ view : Model -> Html Msg
 view model =
     let
         buffaloExprs =
-            buffalo model.numBuffalo model.parseType Emoji
+            buffalo model.numBuffalo model.parseType model.representation
     in
     div []
         [ renderControls model (List.length buffaloExprs)
@@ -171,6 +210,7 @@ init opts =
     ( { currentTooltip = Nothing
       , numBuffalo = 3
       , parseType = Sentences
+      , representation = Verbose
       }
     , Cmd.none
     )

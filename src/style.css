@@ -10,21 +10,26 @@ input {
   padding: 20px;
 }
 
-.expression-filters {
+.expression-filters, .representation-types {
   display: flex;
   font-size: 24px;
   cursor: pointer;
+  margin-right: 20px;
 }
 
 .details-container {
   margin-top: 30px;
 }
 
-.filter {
+.options {
+  display: flex;
+}
+
+.filter, .rep {
   margin-right: 10px;
 }
 
-.active.filter {
+.active {
   text-decoration: underline;
 }
 
