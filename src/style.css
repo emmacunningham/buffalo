@@ -37,11 +37,15 @@ input {
   background: #fff;
   position: fixed;
   width: 100%;
-  top: 0
+  top: 0;
+  left: 0;
+  padding: 20px;
+  border-bottom: 1px solid gray;
 }
 
 .trees-container {
-  padding-top: 430px;
+  padding-top: 440px;
+  margin: 0 30px;
 }
 
 .tree-container {
