@@ -2,7 +2,7 @@ module Main exposing (main)
 
 import Browser
 import Buffalo exposing (buffalo)
-import ExpressionFilter exposing (ExpressionFilter(..))
+import Expression exposing (ExpressionFilter(..), Representation(..))
 import Html exposing (Html, button, div, input, text)
 import Html.Attributes as Attr exposing (class, type_, value)
 import Html.Events exposing (onClick, onInput, onMouseOut, onMouseOver)
@@ -113,7 +113,7 @@ view : Model -> Html Msg
 view model =
     let
         buffaloExprs =
-            buffalo model.numBuffalo Sentences
+            buffalo model.numBuffalo Sentences Emoji
     in
     div []
         [ renderControls model (List.length buffaloExprs)

@@ -1,10 +1,6 @@
-module LexicalEntries exposing (buffaloMammalGroup)
+module LexicalEntries exposing (buffaloCityPredicate, buffaloMammalGroup, buffaloVerbPredicate)
 
-
-type Representation
-    = Verbose
-    | PredicateLogic
-    | Emoji
+import Expression exposing (Representation(..))
 
 
 buffaloMammalGroup : Representation -> String

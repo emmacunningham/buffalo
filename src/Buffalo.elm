@@ -1,6 +1,7 @@
 module Buffalo exposing (buffalo)
 
-import ExpressionFilter exposing (ExpressionFilter(..))
+import Expression exposing (ExpressionFilter(..), Representation(..))
+import LexicalEntries exposing (..)
 import Tree exposing (RenderedNode, Tree(..))
 
 
@@ -48,63 +49,44 @@ type alias BuffaloExpression =
     }
 
 
-
--- Function application builds up tree and parses expressions
-
-
-buffaloMammalGroup : String
-buffaloMammalGroup =
-    "[the group of mammals within the subfamily Bovinae]"
-
-
-buffaloCityPredicate : String
-buffaloCityPredicate =
-    " is from Buffalo"
-
-
-buffaloVerbPredicate : String
-buffaloVerbPredicate =
-    " bullies "
-
-
-buffaloNP : BuffaloExpression
-buffaloNP =
-    { semantics = NP buffaloMammalGroup
-    , tree = TerminalNode (RenderedNode "NP" buffaloMammalGroup)
+buffaloNP : Representation -> BuffaloExpression
+buffaloNP rep =
+    { semantics = NP (buffaloMammalGroup rep)
+    , tree = TerminalNode (RenderedNode "NP" (buffaloMammalGroup rep))
     }
 
 
-buffaloN : BuffaloExpression
-buffaloN =
-    { semantics = N (\p -> "the x s.t. is a member of " ++ buffaloMammalGroup ++ " and " ++ p "x")
-    , tree = TerminalNode (RenderedNode "N" ("\\x[x is a member of " ++ buffaloMammalGroup ++ "]"))
+buffaloN : Representation -> BuffaloExpression
+buffaloN rep =
+    { semantics = N (\p -> "the x s.t. is a member of " ++ buffaloMammalGroup rep ++ " and " ++ p "x")
+    , tree = TerminalNode (RenderedNode "N" ("\\x[x is a member of " ++ buffaloMammalGroup rep ++ "]"))
     }
 
 
-buffaloCity : BuffaloExpression
-buffaloCity =
-    { semantics = AdjP (\x -> "[" ++ x ++ buffaloCityPredicate ++ "]")
-    , tree = TerminalNode (RenderedNode "AdjP" ("\\x[x" ++ buffaloCityPredicate ++ "]"))
+buffaloCity : Representation -> BuffaloExpression
+buffaloCity rep =
+    { semantics = AdjP (\x -> "[" ++ x ++ buffaloCityPredicate rep ++ "]")
+    , tree = TerminalNode (RenderedNode "AdjP" ("\\x[x" ++ buffaloCityPredicate rep ++ "]"))
     }
 
 
-buffaloIntrVerb : BuffaloExpression
-buffaloIntrVerb =
-    { semantics = VP (\x -> "[" ++ x ++ buffaloVerbPredicate ++ "(someone)]")
-    , tree = TerminalNode (RenderedNode "VP" ("\\x[x" ++ buffaloVerbPredicate ++ "(someone)]"))
+buffaloIntrVerb : Representation -> BuffaloExpression
+buffaloIntrVerb rep =
+    { semantics = VP (\x -> "[" ++ x ++ buffaloVerbPredicate rep ++ "(someone)]")
+    , tree = TerminalNode (RenderedNode "VP" ("\\x[x" ++ buffaloVerbPredicate rep ++ "(someone)]"))
     }
 
 
-buffaloTrVerb : BuffaloExpression
-buffaloTrVerb =
-    { semantics = TrVerb (\o s -> "[" ++ s ++ buffaloVerbPredicate ++ o ++ "]")
-    , tree = TerminalNode (RenderedNode "Verb" ("\\o s[s" ++ buffaloVerbPredicate ++ "o]"))
+buffaloTrVerb : Representation -> BuffaloExpression
+buffaloTrVerb rep =
+    { semantics = TrVerb (\o s -> "[" ++ s ++ buffaloVerbPredicate rep ++ o ++ "]")
+    , tree = TerminalNode (RenderedNode "Verb" ("\\o s[s" ++ buffaloVerbPredicate rep ++ "o]"))
     }
 
 
 attachRC : Individual -> (Individual -> TruthStatement) -> Individual
 attachRC individual predicate =
-    predicate (individual ++ " who ")
+    predicate (individual ++ " that ")
 
 
 applyVP : Tree -> (Subject -> Sentence) -> BuffaloExpression -> Maybe BuffaloExpression
@@ -168,24 +150,28 @@ applyN curTree predicate next =
             Nothing
 
 
-expressionApplication : Int -> BuffaloExpression -> List BuffaloExpression
-expressionApplication takeNext ({ tree, semantics } as expr) =
+expressionApplication : Int -> Representation -> BuffaloExpression -> List BuffaloExpression
+expressionApplication takeNext rep ({ tree, semantics } as expr) =
+    let
+        possibleExprs =
+            buffaloParser takeNext rep
+    in
     case semantics of
         N predicate ->
-            List.filterMap (applyN tree predicate) (buffaloParser takeNext)
+            List.filterMap (applyN tree predicate) possibleExprs
 
         VP predicate ->
             let
                 sentence =
-                    List.filterMap (applyVP tree predicate) (buffaloParser takeNext)
+                    List.filterMap (applyVP tree predicate) possibleExprs
 
                 relativeClause =
-                    List.filterMap (transformVP tree predicate) (buffaloParser takeNext)
+                    List.filterMap (transformVP tree predicate) possibleExprs
             in
             List.concat [ sentence, relativeClause ]
 
         NP individual ->
-            List.filterMap (applyNP tree individual) (buffaloParser takeNext)
+            List.filterMap (applyNP tree individual) possibleExprs
 
         _ ->
             []
@@ -221,30 +207,30 @@ sentenceFilter expr =
             Nothing
 
 
-buffalo : Int -> ExpressionFilter -> List Tree
-buffalo num filter =
-    buffaloParser num |> toRenderTrees filter
+buffalo : Int -> ExpressionFilter -> Representation -> List Tree
+buffalo num filter rep =
+    buffaloParser num rep |> toRenderTrees filter
 
 
-buffaloParser : Int -> List BuffaloExpression
-buffaloParser num =
+buffaloParser : Int -> Representation -> List BuffaloExpression
+buffaloParser num rep =
     case num of
         0 ->
             []
 
         1 ->
-            [ buffaloN, buffaloCity, buffaloNP, buffaloIntrVerb, buffaloTrVerb ]
+            [ buffaloN rep, buffaloCity rep, buffaloNP rep, buffaloIntrVerb rep, buffaloTrVerb rep ]
 
         _ ->
             let
                 nextDirect =
-                    buffaloParser (num - 1)
-                        |> List.map (expressionApplication 1)
+                    buffaloParser (num - 1) rep
+                        |> List.map (expressionApplication 1 rep)
                         |> List.concat
 
                 skipNext =
-                    buffaloParser (num - 2)
-                        |> List.map (expressionApplication 2)
+                    buffaloParser (num - 2) rep
+                        |> List.map (expressionApplication 2 rep)
                         |> List.concat
             in
             List.concat [ nextDirect, skipNext ]
