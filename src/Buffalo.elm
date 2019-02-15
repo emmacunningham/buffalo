@@ -57,6 +57,16 @@ buffaloMammalGroup =
     "[the group of mammals within the subfamily Bovinae]"
 
 
+buffaloCityPredicate : String
+buffaloCityPredicate =
+    " is from Buffalo"
+
+
+buffaloVerbPredicate : String
+buffaloVerbPredicate =
+    " bullies "
+
+
 buffaloNP : BuffaloExpression
 buffaloNP =
     { semantics = NP buffaloMammalGroup
@@ -66,29 +76,29 @@ buffaloNP =
 
 buffaloN : BuffaloExpression
 buffaloN =
-    { semantics = N (\p -> "the x s.t. is a member of the group of mammals within the subfamily Bovinae and " ++ p "x")
-    , tree = TerminalNode (RenderedNode "N" "\\x[x is a member of the group of mammals within the subfamily Bovinae]")
+    { semantics = N (\p -> "the x s.t. is a member of " ++ buffaloMammalGroup ++ " and " ++ p "x")
+    , tree = TerminalNode (RenderedNode "N" ("\\x[x is a member of " ++ buffaloMammalGroup ++ "]"))
     }
 
 
 buffaloCity : BuffaloExpression
 buffaloCity =
-    { semantics = AdjP (\x -> "[" ++ x ++ " is from Buffalo]")
-    , tree = TerminalNode (RenderedNode "AdjP" "\\x[x is from Buffalo]")
+    { semantics = AdjP (\x -> "[" ++ x ++ buffaloCityPredicate ++ "]")
+    , tree = TerminalNode (RenderedNode "AdjP" ("\\x[x" ++ buffaloCityPredicate ++ "]"))
     }
 
 
 buffaloIntrVerb : BuffaloExpression
 buffaloIntrVerb =
-    { semantics = VP (\x -> "[" ++ x ++ " bullies (someone)]")
-    , tree = TerminalNode (RenderedNode "VP" "\\x[x bullies (someone)]")
+    { semantics = VP (\x -> "[" ++ x ++ buffaloVerbPredicate ++ "(someone)]")
+    , tree = TerminalNode (RenderedNode "VP" ("\\x[x" ++ buffaloVerbPredicate ++ "(someone)]"))
     }
 
 
 buffaloTrVerb : BuffaloExpression
 buffaloTrVerb =
-    { semantics = TrVerb (\o s -> "[" ++ s ++ " bullies" ++ o ++ "]")
-    , tree = TerminalNode (RenderedNode "Verb" "\\o s[s bullies o]")
+    { semantics = TrVerb (\o s -> "[" ++ s ++ buffaloVerbPredicate ++ o ++ "]")
+    , tree = TerminalNode (RenderedNode "Verb" ("\\o s[s" ++ buffaloVerbPredicate ++ "o]"))
     }
 
 
