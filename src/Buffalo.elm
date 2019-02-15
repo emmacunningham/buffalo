@@ -6,15 +6,10 @@ import Tree exposing (RenderedNode, Tree(..))
 
 
 
--- live demo : swap out character set
 -- live demo : imperative tense
 
 
 type alias Subject =
-    String
-
-
-type alias Object =
     String
 
 
@@ -26,8 +21,8 @@ type alias TruthStatement =
     String
 
 
-type alias Adjective =
-    String -> String
+type alias Predicate =
+    Individual -> TruthStatement
 
 
 type alias Individual =
@@ -35,12 +30,12 @@ type alias Individual =
 
 
 type SemanticValue
-    = N ((Individual -> TruthStatement) -> TruthStatement) -- it's either with an adjective or by itself
+    = N (Predicate -> TruthStatement)
     | NP Individual
-    | AdjP (Individual -> TruthStatement)
+    | AdjP Predicate
     | S TruthStatement
-    | TrVerb (Object -> Individual -> TruthStatement)
-    | VP (Individual -> TruthStatement)
+    | TrVerb (Individual -> Predicate)
+    | VP Predicate
 
 
 type alias BuffaloExpression =
